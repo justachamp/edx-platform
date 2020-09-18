@@ -1,0 +1,25 @@
+name: edxapp-db-dump
+on:
+  push:
+    branches:
+      - 'master'
+jobs:
+  edxapp-db-dump:
+    name: edxapp-db-dump
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: migrate
+        run: docker-compose up -f docker-compose-edxapp-db-dump.yml -d
+      - name: dump database
+        run: docker exec -i mysql  mysqldump -uroot edxapp > edxapp.sql
+      - name: commit edxapp dump file
+        run: |
+          git config --local user.email "edx-deployment@edx.org"
+          git config --local user.name "edx-deployment"
+          git commit -m "edxapp db dump" -a
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+           github_token: ${{ secrets.GH_TOKEN }}
