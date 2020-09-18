@@ -12,6 +12,7 @@ from django.conf import settings
 from lms.djangoapps.courseware.access_utils import ACCESS_DENIED, ACCESS_GRANTED
 from lms.djangoapps.courseware.tabs import ExternalLinkCourseTab
 from lms.djangoapps.courseware.tests.helpers import MasqueradeMixin
+from lms.djangoapps.courseware.views.views import AUDIT_PASSING_CERT_DATA
 from student.models import CourseEnrollment, CourseEnrollmentCelebration
 from student.tests.factories import CourseEnrollmentCelebrationFactory, UserFactory
 from xmodule.modulestore.django import modulestore
@@ -105,6 +106,13 @@ class CourseApiTestViews(BaseCoursewareTests):
                         if tab['url'] == 'http://zombo.com':
                             found = True
                 assert found, 'external link not in course tabs'
+
+                assert not response.data['user_has_passing_grade']
+                if enrollment_mode == 'audit':
+                    assert response.data['certificate_data']['msg'] == AUDIT_PASSING_CERT_DATA.msg
+                else:
+                    # Not testing certificate data for verified learner here. That is tested elsewhere
+                    assert response.data['certificate_data'] is None
             elif enable_anonymous and not logged_in:
                 # multiple checks use this handler
                 check_public_access.assert_called()
